@@ -2,13 +2,20 @@ package service
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/valenrio66/be-project/pkg/utils"
 
 	"github.com/valenrio66/be-project/internal/db"
 	"github.com/valenrio66/be-project/internal/dto"
+)
+
+var (
+	ErrCampaignNotFound = errors.New("campaign not found")
 )
 
 type CampaignService struct {
@@ -38,12 +45,13 @@ func (s *CampaignService) CreateCampaign(ctx context.Context, userID uuid.UUID, 
 	}
 
 	return &dto.CampaignResponse{
-		ID:        campaign.ID.String(),
-		UserID:    campaign.UserID.String(),
-		Title:     campaign.Title,
-		Status:    campaign.Status,
-		Budget:    campaign.Budget,
-		CreatedAt: campaign.CreatedAt.Time,
+		ID:          campaign.ID.String(),
+		UserID:      campaign.UserID.String(),
+		Title:       campaign.Title,
+		Description: utils.PtrToString(campaign.Description),
+		Status:      campaign.Status,
+		Budget:      campaign.Budget,
+		CreatedAt:   campaign.CreatedAt.Time,
 	}, nil
 }
 
@@ -64,15 +72,107 @@ func (s *CampaignService) ListCampaigns(ctx context.Context, userID uuid.UUID, p
 	var responses []dto.CampaignResponse
 	for _, c := range campaigns {
 		responses = append(responses, dto.CampaignResponse{
-			ID:        c.ID.String(),
-			Title:     c.Title,
-			Status:    c.Status,
-			StartDate: c.StartDate.Time,
-			EndDate:   c.EndDate.Time,
-			Budget:    c.Budget,
-			CreatedAt: c.CreatedAt.Time,
+			ID:          c.ID.String(),
+			UserID:      c.UserID.String(),
+			Title:       c.Title,
+			Description: utils.PtrToString(c.Description),
+			Status:      c.Status,
+			StartDate:   c.StartDate.Time,
+			EndDate:     c.EndDate.Time,
+			Budget:      c.Budget,
+			CreatedAt:   c.CreatedAt.Time,
 		})
 	}
 
 	return responses, nil
+}
+
+func (s *CampaignService) GetCampaign(ctx context.Context, userID uuid.UUID, campaignID uuid.UUID) (*dto.CampaignResponse, error) {
+	campaign, err := s.queries.GetCampaign(ctx, db.GetCampaignParams{
+		ID:     campaignID,
+		UserID: userID,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrCampaignNotFound
+		}
+		return nil, err
+	}
+
+	var startDate, endDate time.Time
+	if campaign.StartDate.Valid {
+		startDate = campaign.StartDate.Time
+	}
+	if campaign.EndDate.Valid {
+		endDate = campaign.EndDate.Time
+	}
+
+	return &dto.CampaignResponse{
+		ID:          campaign.ID.String(),
+		UserID:      campaign.UserID.String(),
+		Title:       campaign.Title,
+		Description: utils.PtrToString(campaign.Description),
+		Status:      campaign.Status,
+		Budget:      campaign.Budget,
+		StartDate:   startDate,
+		EndDate:     endDate,
+		CreatedAt:   campaign.CreatedAt.Time,
+	}, nil
+}
+
+func (s *CampaignService) UpdateCampaign(ctx context.Context, userID uuid.UUID, campaignID uuid.UUID, req dto.UpdateCampaignRequest) (*dto.CampaignResponse, error) {
+	var budget pgtype.Numeric
+	if req.Budget != nil {
+		if err := budget.Scan(*req.Budget); err != nil {
+			return nil, err
+		}
+	}
+
+	arg := db.UpdateCampaignParams{
+		ID:          campaignID,
+		UserID:      userID,
+		Title:       req.Title,
+		Description: req.Description,
+		Status:      req.Status,
+		StartDate:   utils.ToPgTimestamp(req.StartDate),
+		EndDate:     utils.ToPgTimestamp(req.EndDate),
+		Budget:      budget,
+	}
+
+	campaign, err := s.queries.UpdateCampaign(ctx, arg)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrCampaignNotFound
+		}
+		return nil, err
+	}
+
+	var startDate, endDate time.Time
+	if campaign.StartDate.Valid {
+		startDate = campaign.StartDate.Time
+	}
+	if campaign.EndDate.Valid {
+		endDate = campaign.EndDate.Time
+	}
+
+	return &dto.CampaignResponse{
+		ID:          campaign.ID.String(),
+		UserID:      campaign.UserID.String(),
+		Title:       campaign.Title,
+		Description: utils.PtrToString(campaign.Description),
+		Status:      campaign.Status,
+		Budget:      campaign.Budget,
+		StartDate:   startDate,
+		EndDate:     endDate,
+		CreatedAt:   campaign.CreatedAt.Time,
+	}, nil
+}
+
+func (s *CampaignService) DeleteCampaign(ctx context.Context, userID uuid.UUID, campaignID uuid.UUID) error {
+	err := s.queries.DeleteCampaign(ctx, db.DeleteCampaignParams{
+		ID:     campaignID,
+		UserID: userID,
+	})
+
+	return err
 }

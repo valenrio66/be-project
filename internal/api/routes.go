@@ -28,6 +28,9 @@ func SetupRoutes(r *gin.Engine, userHandler *handlers.UserHandler, campaignHandl
 			{
 				campaigns.POST("", campaignHandler.Create)
 				campaigns.GET("", campaignHandler.List)
+				campaigns.GET("/:id", campaignHandler.Get)
+				campaigns.PUT("/:id", campaignHandler.Update)
+				campaigns.DELETE("/:id", campaignHandler.Delete)
 			}
 		}
 	}

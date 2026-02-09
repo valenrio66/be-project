@@ -28,3 +28,12 @@ type PaginationRequest struct {
 	Page  int `form:"page" binding:"min=1"`
 	Limit int `form:"limit" binding:"min=1,max=100"`
 }
+
+type UpdateCampaignRequest struct {
+	Title       *string    `json:"title"`
+	Description *string    `json:"description"`
+	Status      *string    `json:"status"`
+	StartDate   *time.Time `json:"start_date"`
+	EndDate     *time.Time `json:"end_date" binding:"omitempty,gtfield=StartDate"`
+	Budget      *float64   `json:"budget" binding:"omitempty,gte=0"`
+}

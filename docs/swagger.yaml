@@ -79,6 +79,22 @@ definitions:
     - full_name
     - password
     type: object
+  dto.UpdateCampaignRequest:
+    properties:
+      budget:
+        minimum: 0
+        type: number
+      description:
+        type: string
+      end_date:
+        type: string
+      start_date:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+    type: object
   dto.UserResponse:
     properties:
       email:
@@ -173,6 +189,125 @@ paths:
       summary: Create new campaign
       tags:
       - Campaigns
+  /campaigns/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete specific campaign
+      parameters:
+      - description: Campaign ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete campaign
+      tags:
+      - campaigns
+    get:
+      consumes:
+      - application/json
+      description: Get specific campaign by ID (must be owned by user)
+      parameters:
+      - description: Campaign ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CampaignResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get campaign detail
+      tags:
+      - campaigns
+    put:
+      consumes:
+      - application/json
+      description: Update campaign details (Partial Update supported)
+      parameters:
+      - description: Campaign ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateCampaignRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CampaignResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update campaign
+      tags:
+      - campaigns
   /login:
     post:
       consumes:

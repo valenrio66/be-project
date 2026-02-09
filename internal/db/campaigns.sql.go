@@ -17,7 +17,7 @@ INSERT INTO campaigns (
     user_id, title, description, status, start_date, end_date, budget
 ) VALUES (
              $1, $2, $3, $4, $5, $6, $7
-         ) RETURNING id, user_id, title, status, budget, created_at
+         ) RETURNING id, user_id, title, description, status, budget, created_at
 `
 
 type CreateCampaignParams struct {
@@ -31,12 +31,13 @@ type CreateCampaignParams struct {
 }
 
 type CreateCampaignRow struct {
-	ID        uuid.UUID          `json:"id"`
-	UserID    uuid.UUID          `json:"user_id"`
-	Title     string             `json:"title"`
-	Status    string             `json:"status"`
-	Budget    float64            `json:"budget"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ID          uuid.UUID          `json:"id"`
+	UserID      uuid.UUID          `json:"user_id"`
+	Title       string             `json:"title"`
+	Description *string            `json:"description"`
+	Status      string             `json:"status"`
+	Budget      float64            `json:"budget"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 func (q *Queries) CreateCampaign(ctx context.Context, arg CreateCampaignParams) (CreateCampaignRow, error) {
@@ -54,6 +55,7 @@ func (q *Queries) CreateCampaign(ctx context.Context, arg CreateCampaignParams) 
 		&i.ID,
 		&i.UserID,
 		&i.Title,
+		&i.Description,
 		&i.Status,
 		&i.Budget,
 		&i.CreatedAt,
@@ -106,7 +108,7 @@ func (q *Queries) GetCampaign(ctx context.Context, arg GetCampaignParams) (Campa
 }
 
 const listCampaigns = `-- name: ListCampaigns :many
-SELECT id, title, status, start_date, end_date, budget, created_at
+SELECT id, user_id, title, description, status, start_date, end_date, budget, created_at
 FROM campaigns
 WHERE user_id = $1
 ORDER BY created_at DESC
@@ -120,13 +122,15 @@ type ListCampaignsParams struct {
 }
 
 type ListCampaignsRow struct {
-	ID        uuid.UUID          `json:"id"`
-	Title     string             `json:"title"`
-	Status    string             `json:"status"`
-	StartDate pgtype.Timestamptz `json:"start_date"`
-	EndDate   pgtype.Timestamptz `json:"end_date"`
-	Budget    float64            `json:"budget"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ID          uuid.UUID          `json:"id"`
+	UserID      uuid.UUID          `json:"user_id"`
+	Title       string             `json:"title"`
+	Description *string            `json:"description"`
+	Status      string             `json:"status"`
+	StartDate   pgtype.Timestamptz `json:"start_date"`
+	EndDate     pgtype.Timestamptz `json:"end_date"`
+	Budget      float64            `json:"budget"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 func (q *Queries) ListCampaigns(ctx context.Context, arg ListCampaignsParams) ([]ListCampaignsRow, error) {
@@ -140,7 +144,9 @@ func (q *Queries) ListCampaigns(ctx context.Context, arg ListCampaignsParams) ([
 		var i ListCampaignsRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.UserID,
 			&i.Title,
+			&i.Description,
 			&i.Status,
 			&i.StartDate,
 			&i.EndDate,
@@ -174,12 +180,12 @@ WHERE id = $1 AND user_id = $2
 type UpdateCampaignParams struct {
 	ID          uuid.UUID          `json:"id"`
 	UserID      uuid.UUID          `json:"user_id"`
-	Title       string             `json:"title"`
+	Title       *string            `json:"title"`
 	Description *string            `json:"description"`
-	Status      string             `json:"status"`
+	Status      *string            `json:"status"`
 	StartDate   pgtype.Timestamptz `json:"start_date"`
 	EndDate     pgtype.Timestamptz `json:"end_date"`
-	Budget      float64            `json:"budget"`
+	Budget      pgtype.Numeric     `json:"budget"`
 }
 
 func (q *Queries) UpdateCampaign(ctx context.Context, arg UpdateCampaignParams) (Campaign, error) {
