@@ -7,6 +7,7 @@ import (
 	"github.com/valenrio66/be-project/internal/api/handlers"
 	"github.com/valenrio66/be-project/internal/middleware"
 	"github.com/valenrio66/be-project/pkg/token"
+	"github.com/valenrio66/be-project/pkg/utils"
 )
 
 func SetupRoutes(r *gin.Engine, userHandler *handlers.UserHandler, campaignHandler *handlers.CampaignHandler, tokenMaker *token.JWTMaker) {
@@ -26,11 +27,14 @@ func SetupRoutes(r *gin.Engine, userHandler *handlers.UserHandler, campaignHandl
 			protected.GET("/me", userHandler.GetMe)
 			campaigns := protected.Group("/campaigns")
 			{
-				campaigns.POST("", campaignHandler.Create)
-				campaigns.GET("", campaignHandler.List)
-				campaigns.GET("/:id", campaignHandler.Get)
-				campaigns.PUT("/:id", campaignHandler.Update)
-				campaigns.DELETE("/:id", campaignHandler.Delete)
+				commonRoles := middleware.RoleMiddleware(utils.RoleUser, utils.RoleAdmin)
+				campaigns.POST("", commonRoles, campaignHandler.Create)
+				campaigns.GET("", commonRoles, campaignHandler.List)
+				campaigns.GET("/:id", commonRoles, campaignHandler.Get)
+				campaigns.PUT("/:id", commonRoles, campaignHandler.Update)
+
+				adminOnly := middleware.RoleMiddleware(utils.RoleAdmin)
+				campaigns.DELETE("/:id", adminOnly, campaignHandler.Delete)
 			}
 		}
 	}
