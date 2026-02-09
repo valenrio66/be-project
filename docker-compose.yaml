@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  # 1. Database Service
+  postgres:
+    image: postgres:16-alpine
+    container_name: be-project-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=valen123
+      - POSTGRES_DB=marketing_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. App Service (Go BE)
+  api:
+    build: .  # Build from Dockerfile in this directory
+    container_name: be-project-api
+    ports:
+      - "3000:3000"
+    environment:
+      # IMPORTANT: The host is not ‘localhost’, but the name of the db service, which is ‘postgres’
+      - DATABASE_URL=postgresql://postgres:valen123@postgres:5432/marketing_db?sslmode=disable
+      - SERVER_ADDRESS=0.0.0.0:3000
+      # Other environments can be taken from the .env file or hardcoded here.
+    depends_on:
+      - postgres # Wait until the DB turns on first, then the application will start.
+    restart: on-failure
+
+volumes:
+  postgres_data:
