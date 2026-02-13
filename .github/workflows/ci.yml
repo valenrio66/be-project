@@ -1,0 +1,27 @@
+name: Backend CI Pipeline
+
+# Trigger this workflow every time there is a push to the main branch or Pull Request
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go Environment
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25' # Adjust it to the version in your go.mod
+
+      - name: Download Dependencies
+        run: go mod download
+
+      - name: Run Build
+        run: go build -v ./cmd/api/main.go
