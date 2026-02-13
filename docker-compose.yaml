@@ -6,11 +6,11 @@ services:
     image: postgres:16-alpine
     container_name: be-project-db
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=valen123
-      - POSTGRES_DB=marketing_db
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -19,11 +19,13 @@ services:
     build: .  # Build from Dockerfile in this directory
     container_name: be-project-api
     ports:
-      - "3000:3000"
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    env_file:
+      .env
     environment:
       # IMPORTANT: The host is not ‘localhost’, but the name of the db service, which is ‘postgres’
-      - DATABASE_URL=postgresql://postgres:valen123@postgres:5432/marketing_db?sslmode=disable
-      - SERVER_ADDRESS=0.0.0.0:3000
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable
+      - SERVER_ADDRESS=0.0.0.0:${SERVER_PORT}
       # Other environments can be taken from the .env file or hardcoded here.
     depends_on:
       - postgres # Wait until the DB turns on first, then the application will start.
