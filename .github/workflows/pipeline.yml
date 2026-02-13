@@ -1,0 +1,46 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  # ==========================================
+  # JOB 1: CI (Running on GitHub Server)
+  # ==========================================
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go Environment
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Download Dependencies
+        run: go mod download
+
+      - name: Run Build
+        run: go build -v ./cmd/api/main.go
+
+    # - name: Run Tests
+    #   run: go test -v ./...
+
+  # ==========================================
+  # JOB 2: CD (Running on Your Server)
+  # ==========================================
+  deploy:
+    # HERE'S THE KEY: This job is waiting for a SUCCESSFUL ‘build-and-test’ first.
+    needs: build-and-test
+    runs-on: self-hosted
+
+    steps:
+      - name: Pull Latest Code & Restart Docker
+        # Ensure this path matches your folder in server
+        run: |
+          cd /home/valenrio66/be-project
+          git pull origin main
+          docker compose up -d --build
