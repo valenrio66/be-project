@@ -68,7 +68,7 @@ func main() {
 	r.Use(middleware.ZapLogger())
 	api.SetupRoutes(r, userHandler, campaignHandler, tokenMaker)
 
-	logger.Info("Testing " + cfg.ServerPort)
+	logger.Info("Server running on port " + cfg.ServerPort)
 	if err := r.Run(":" + cfg.ServerPort); err != nil {
 		logger.Error("Failed to run server", zap.Error(err))
 	}
