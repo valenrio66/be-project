@@ -29,7 +29,7 @@ services:
       # Other environments can be taken from the .env file or hardcoded here.
     depends_on:
       - postgres # Wait until the DB turns on first, then the application will start.
-    restart: on-failure
+    restart: always
 
 volumes:
   postgres_data:
