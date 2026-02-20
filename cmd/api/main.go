@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/valenrio66/be-project/internal/service"
 	"github.com/valenrio66/be-project/pkg/token"
@@ -66,6 +67,12 @@ func main() {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.ZapLogger())
+
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	r.Use(cors.New(corsConfig))
+
 	api.SetupRoutes(r, userHandler, campaignHandler, tokenMaker)
 
 	logger.Info("Server running on port " + cfg.ServerPort)
